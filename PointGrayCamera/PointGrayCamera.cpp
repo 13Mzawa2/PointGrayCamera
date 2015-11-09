@@ -1,5 +1,5 @@
 #ifdef _DEBUG
-#define FC2_EXT "d.lib"
+#define FC2_EXT ".lib"
 #define CV_EXT "d.lib"
 #else
 #define FC2_EXT ".lib"
