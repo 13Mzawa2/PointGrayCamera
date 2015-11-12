@@ -80,7 +80,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="FlyCap2CVWrapper.cpp" />
     <ClCompile Include="PointGrayCamera.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="FlyCap2CVWrapper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
