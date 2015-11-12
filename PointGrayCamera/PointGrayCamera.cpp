@@ -70,7 +70,7 @@ int main(void)
 		// convert to OpenCV Mat
 		unsigned int rowBytes = (double)rgbImage.GetReceivedDataSize() / (double)rgbImage.GetRows();
 		cv::Mat image = cv::Mat(rgbImage.GetRows(), rgbImage.GetCols(), CV_8UC3, rgbImage.GetData(), rowBytes);
-
+		flip(image, image, 1);
 		cv::imshow("image", image);
 		key = cv::waitKey(30);
 	}
