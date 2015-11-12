@@ -14,7 +14,7 @@ int main(void)
 		cv::Mat image = cam.readImage();
 		flip(image, image, 1);
 		cv::imshow("image", image);
-		key = cv::waitKey(30);
+		key = cv::waitKey(1);
 	}
 
 	return 0;

@@ -39,8 +39,8 @@ FlyCap2CVWrapper::FlyCap2CVWrapper()
 		std::cout << "Failed to set video mode and frame rate" << std::endl;
 		return;
 	}
-	autoFrameRate(false, 85.0f);
 	//	Disable Auto changes
+	autoFrameRate(false, 85.0f);
 	autoWhiteBalance(false, 640, 640);
 	autoExposure(false, 1.585f);
 	autoSaturation(false, 100.0f);
