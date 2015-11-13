@@ -16,7 +16,8 @@ GrayCodePatternProjection::GrayCodePatternProjection(Size projSize, Size camSize
 void GrayCodePatternProjection::init(cv::Size projSize, cv::Size camSize)
 {
 	projectorSize = projSize; cameraSize = camSize;
-
+	makeGrayCodePatternLists();
+	makeGrayCodeImages();
 }
 
 GrayCodePatternProjection::~GrayCodePatternProjection()
@@ -78,63 +79,49 @@ int GrayCodePatternProjection::gray2bin(int gray)
 //		[000011] -> pattern 1
 //		[001111] -> pattern 2
 //		[011001] -> pattern 3
-vector<Mat> GrayCodePatternProjection::makeGrayCodePatternLists(Size projSize)
+void GrayCodePatternProjection::makeGrayCodePatternLists(void)
 {
 	//	最大ビット長lのカウント
 	int lw = 0, lh = 0;		//	プロジェクタ画像サイズそれぞれの最大ビット数
-	for (int x = projSize.width-1; x > 0; x = x >> 1) lw++;
-	for (int y = projSize.height-1; y > 0; y = y >> 1) lh++;
+	for (int x = projectorSize.width-1; x > 0; x = x >> 1) lw++;
+	for (int y = projectorSize.height - 1; y > 0; y = y >> 1) lh++;
 	//	0 ~ projSize.width (heigt) のグレイコードをビット化して行列に格納
 	//	行を取り出せばパターンになるようにする
-	Mat patternListW(Size(projSize.width, lw), CV_8UC1),
-		patternListH(Size(projSize.height, lh), CV_8UC1);
-	for (int i = 0; i < projSize.width; i++){
+	patternListW = Mat(Size(projectorSize.width, lw), CV_8UC1);
+	patternListH = Mat(Size(projectorSize.height, lh), CV_8UC1);
+	for (int i = 0; i < projectorSize.width; i++){
 		for (int j = lw; j > 0; j--){			//	最上位bitから調べていく
 			//	グレイコードの i の j bit目が1であれば1を，そうでなければ0を入れる
 			patternListW.at<uchar>(lw - j, i) = (bin2gray(i) & (1 << (j - 1))) && 1;
 		}
 	}
-	for (int i = 0; i < projSize.height; i++){
+	for (int i = 0; i < projectorSize.height; i++){
 		for (int j = lh; j > 0; j--){			//	最上位bitから調べていく
 			//	グレイコードの i の j bit目が1であれば1を，そうでなければ0を入れる
 			patternListH.at<uchar>(lh - j, i) = (bin2gray(i) & (1 << (j - 1))) && 1;
 		}
 	}
-	vector<Mat> patternLists;
-	patternLists.push_back(patternListW);
-	patternLists.push_back(patternListH);
-
-	return patternLists;
+	
 }
 
 //	パターンリストからグレイコードパターンを生成
 //	isVertical: true = 縦方向，false = 横方向
 //	1番目が最上位ビット
-std::vector<cv::Mat> GrayCodePatternProjection::makeGrayCodeImages(cv::Size projSize, cv::Mat patternList, bool isVertical)
+void GrayCodePatternProjection::makeGrayCodeImages(void)
 {
-	vector<Mat> patternImages;
-	if (isVertical)
+	for (int i = 0; i < patternListW.rows; i++)
 	{
-		for (int i = 0; i < patternList.rows; i++)
-		{
-			Mat pattern(projSize, CV_8UC1);
-			resize(255 * patternList.row(i), pattern, projSize, INTER_NEAREST);
-			patternImages.push_back(pattern);
-			imshow("test", pattern);
-			waitKey(0);
-		}
+		Mat pattern(projectorSize, CV_8UC1);
+		resize(255 * patternListW.row(i), pattern, projectorSize, INTER_NEAREST);
+		patternsW.push_back(pattern);
+		patternsWN.push_back(~pattern);		//	デコード安定化のためのネガ
 	}
-	else
+	for (int i = 0; i < patternListH.rows; i++)
 	{
-		for (int i = 0; i < patternList.rows; i++)
-		{
-			Mat pattern(projSize, CV_8UC1);
-			resize(255 * patternList.row(i).t(), pattern, projSize, INTER_NEAREST);
-			patternImages.push_back(pattern);
-			imshow("test", pattern);
-			waitKey(0);
-		}
+		Mat pattern(projectorSize, CV_8UC1);
+		resize(255 * patternListH.row(i).t(), pattern, projectorSize, INTER_NEAREST);
+		patternsH.push_back(pattern); 
+		patternsHN.push_back(~pattern);		//	デコード安定化のためのネガ
 	}
 
-	return patternImages;
 }

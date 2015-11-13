@@ -14,6 +14,7 @@ const Size patternSize(7, 10);
 const int allPoints = imgNum * patternSize.width * patternSize.height;
 const double chessSize = 22.5;		//	mm
 const double interval = 300.0;
+const Size projSize(1024, 768);
 
 //	Results
 Mat cameraMatrix;		//	カメラ内部行列
@@ -25,15 +26,23 @@ Mat map1, map2;			//	歪み補正マップ
 int main(void)
 {
 	FlyCap2CVWrapper cam;
+	cv::Mat img = cam.readImage();
 
-	GrayCodePatternProjection gcp;
-	//Size projSize(1024, 768);
-	//vector<Mat> patternList;
-	//vector<Mat> patternsW;
-	//vector<Mat> patternsH;
-	//patternList = gcp.makeGrayCodePatternLists(projSize);
-	//patternsW = gcp.makeGrayCodeImages(projSize, patternList[0], true);
-	//patternsH = gcp.makeGrayCodeImages(projSize, patternList[1], false);
+	GrayCodePatternProjection gcp(projSize, img.size());
+	for (int i = 0; i < gcp.patternListW.rows; i++)
+	{
+		imshow("GrayCodePattern", gcp.patternsW[i]);
+		waitKey(0);
+		imshow("GrayCodePattern", gcp.patternsWN[i]);
+		waitKey(0);
+	}
+	for (int i = 0; i < gcp.patternListH.rows; i++)
+	{
+		imshow("GrayCodePattern", gcp.patternsH[i]);
+		waitKey(0);
+		imshow("GrayCodePattern", gcp.patternsHN[i]);
+		waitKey(0);
+	}
 
 	vector<vector<Point3f>> corners3d(imgNum);		//	チェスボード座標系での3次元点
 	vector<vector<Point2f>> corners2d;				//	検出されたカメラ座標コーナー点
@@ -47,7 +56,6 @@ int main(void)
 	}
 	//	チェスボード自動検出
 	//	画角内でチェスボードを動かすと自動的にとれる
-	cv::Mat img;
 	for (int imgFound = 0; imgFound < imgNum;)
 	{
 		//	タイマー

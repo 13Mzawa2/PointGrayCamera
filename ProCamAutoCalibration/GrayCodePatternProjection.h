@@ -6,7 +6,7 @@ class GrayCodePatternProjection
 {
 public:
 	std::vector<cv::Mat> patternsW, patternsH, patternsWN, patternsHN; 
-	cv::Mat patternListW, patternListH;
+	cv::Mat patternListW, patternListH;			//	s”rows‚ªpatterns‚Ì—v‘f”‚Æˆê’v
 	cv::Mat mask;
 	cv::Mat camera2ProjectorMap;
 	cv::Size projectorSize, cameraSize;
@@ -16,8 +16,8 @@ public:
 	~GrayCodePatternProjection();
 	int bin2gray(int bin);
 	int gray2bin(int gray);
-	std::vector<cv::Mat> makeGrayCodePatternLists(cv::Size projSize);
-	std::vector<cv::Mat> makeGrayCodeImages(cv::Size projSize, cv::Mat patternList, bool isVertical);
+	void makeGrayCodePatternLists(void);
+	void makeGrayCodeImages();
 	void init(cv::Size projectorSize, cv::Size cameraSize);
 };
 
