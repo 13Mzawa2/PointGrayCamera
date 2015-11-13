@@ -19,5 +19,6 @@ public:
 	void makeGrayCodePatternLists(void);
 	void makeGrayCodeImages();
 	void init(cv::Size projectorSize, cv::Size cameraSize);
+	void getMask(cv::Mat white, cv::Mat black, int thresh = 20);
 };
 

@@ -187,7 +187,7 @@ cv::Mat FlyCap2CVWrapper::readImage()
 	unsigned int rowBytes = (unsigned int)((double)bgrImg.GetReceivedDataSize() / (double)bgrImg.GetRows());
 	cvImg = cv::Mat(bgrImg.GetRows(), bgrImg.GetCols(), CV_8UC3, bgrImg.GetData(), rowBytes);
 
-	return cvImg;
+	return cvImg.clone();
 }
 
 bool FlyCap2CVWrapper::checkError()

@@ -29,6 +29,27 @@ int main(void)
 	cv::Mat img = cam.readImage();
 
 	GrayCodePatternProjection gcp(projSize, img.size());
+	namedWindow("GrayCodePattern", CV_WINDOW_FREERATIO);
+	moveWindow("GrayCodePattern", -1024, 0);
+	setWindowProperty("GrayCodePattern", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+	waitKey(0);
+	Mat imgWhite, imgBlack;
+	Mat whiteLight(projSize, CV_8UC1, Scalar(255));
+	Mat blackLight(projSize, CV_8UC1, Scalar(0));
+	imshow("GrayCodePattern", blackLight);
+	waitKey(500);
+	imgBlack = cam.readImage();
+	imshow("Mask", imgBlack);
+	waitKey(500);
+	imshow("GrayCodePattern", whiteLight);
+	waitKey(500);
+	imgWhite = cam.readImage();
+	imshow("Mask", imgWhite);
+	waitKey(500);
+	gcp.getMask(imgWhite, imgBlack, 10);
+	imshow("Mask", 255*gcp.mask);
+	waitKey(0);
+
 	for (int i = 0; i < gcp.patternListW.rows; i++)
 	{
 		imshow("GrayCodePattern", gcp.patternsW[i]);

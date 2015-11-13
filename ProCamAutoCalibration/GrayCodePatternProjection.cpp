@@ -125,3 +125,17 @@ void GrayCodePatternProjection::makeGrayCodeImages(void)
 	}
 
 }
+
+//	ƒ}ƒXƒN‰æ‘œ‚ğì¬‚·‚é
+void GrayCodePatternProjection::getMask(Mat white, Mat black, int thresh)
+{
+	Mat wg, bg;
+	cvtColor(white, wg, CV_BGR2GRAY);
+	cvtColor(black, bg, CV_BGR2GRAY);
+	Mat m = wg.clone();
+	for (int i = 0; i < m.rows; i++){
+		for (int j = 0; j < m.cols; j++)
+			m.at<uchar>(i, j) = ((wg.at<uchar>(i, j) - bg.at<uchar>(i, j)) > thresh) ? 1 : 0;
+	}
+	mask = m.clone();
+}
