@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PointGrayCamera", "PointGra
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Calibration", "Calibration\Calibration.vcxproj", "{15548C4B-345C-4F0A-8BC8-7F4139743F56}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProCamAutoCalibration", "ProCamAutoCalibration\ProCamAutoCalibration.vcxproj", "{B79E3FD6-99D2-4269-BA67-6B846457D7BF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -21,6 +23,10 @@ Global
 		{15548C4B-345C-4F0A-8BC8-7F4139743F56}.Debug|Win32.Build.0 = Debug|Win32
 		{15548C4B-345C-4F0A-8BC8-7F4139743F56}.Release|Win32.ActiveCfg = Release|Win32
 		{15548C4B-345C-4F0A-8BC8-7F4139743F56}.Release|Win32.Build.0 = Release|Win32
+		{B79E3FD6-99D2-4269-BA67-6B846457D7BF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B79E3FD6-99D2-4269-BA67-6B846457D7BF}.Debug|Win32.Build.0 = Debug|Win32
+		{B79E3FD6-99D2-4269-BA67-6B846457D7BF}.Release|Win32.ActiveCfg = Release|Win32
+		{B79E3FD6-99D2-4269-BA67-6B846457D7BF}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
