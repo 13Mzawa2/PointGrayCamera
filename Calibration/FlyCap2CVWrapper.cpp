@@ -28,10 +28,10 @@ FlyCap2CVWrapper::FlyCap2CVWrapper()
 	//	Frame Rate: 120fps
 	flycamError = flycam.SetVideoModeAndFrameRate(VIDEOMODE_FORMAT7, FRAMERATE_FORMAT7);
 	Format7ImageSettings imgSettings;
-	imgSettings.offsetX = 268;
-	imgSettings.offsetY = 248;
-	imgSettings.width = 640;
-	imgSettings.height = 480;
+	imgSettings.offsetX = 264;
+	imgSettings.offsetY = 224;
+	imgSettings.width = 800;
+	imgSettings.height = 600;
 	imgSettings.pixelFormat = PIXEL_FORMAT_422YUV8;
 	flycamError = flycam.SetFormat7Configuration(&imgSettings, 100.0f);
 	if (flycamError != PGRERROR_OK)

@@ -12,14 +12,13 @@ const int imgNum = 30;			//	画像数
 const Size patternSize(7, 10);
 const int allPoints = imgNum * patternSize.width * patternSize.height;
 const double chessSize = 22.5;		//	mm
-const double interval = 200.0;
+const double interval = 300.0;
 
 //	Results
 Mat cameraMatrix;		//	カメラ内部行列
 Mat distCoeffs;			//	レンズ歪みベクトル
 vector<Mat> rvecs;		//	個々のチェスボードから見たカメラの回転ベクトル
 vector<Mat> tvecs;		//	個々のチェスボードから見たカメラの並進ベクトル
-Mat cameraMatixUndistorted;		//	レンズ歪み補正後のカメラ内部行列
 Mat map1, map2;			//	歪み補正マップ
 
 int main(void)
@@ -71,21 +70,19 @@ int main(void)
 		img.size(),
 		cameraMatrix, distCoeffs,
 		rvecs, tvecs);
-	cout << "Camera Matirx = " << cameraMatrix << "\nDistortion Coefficience = " << distCoeffs << endl;
+	cout << "Camera Matirx = \n" << cameraMatrix << "\nDistortion Coeffs = \n" << distCoeffs << endl;
 	//	歪み補正マップ計算
 	cout << "Making Undistort Map..." << endl;
 	initUndistortRectifyMap(
 		cameraMatrix, distCoeffs, 
-		Mat(), cameraMatixUndistorted, img.size(), CV_16SC2,
+		Mat(), cameraMatrix, img.size(), CV_16SC2,
 		map1, map2);
 	cout << "Calibration Ended." << endl;
-	destroyWindow("Chessboard");
 
 	// capture loop
 	char key = 0;
 	while (key != 'q')
-	{
-		// Get the image
+	{	// Get the image
 		cv::Mat image = cam.readImage();
 		flip(image, image, 1);
 		Mat imgUndistorted;
@@ -93,6 +90,14 @@ int main(void)
 		cv::imshow("calibrated", imgUndistorted);
 		key = cv::waitKey(1);
 	}
+
+	//	save as XML, PNG
+	FileStorage fs("calibdata.xml", FileStorage::WRITE);
+	fs << "calibration"
+		<< "{"
+		<< "CameraMatrix" << cameraMatrix
+		<< "DistCoeffs" << distCoeffs
+		<< "}";
 
 	return 0;
 }
