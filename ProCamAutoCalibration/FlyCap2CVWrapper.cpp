@@ -44,7 +44,7 @@ FlyCap2CVWrapper::FlyCap2CVWrapper()
 	autoWhiteBalance(false, 640, 640);
 	autoExposure(false, 1.585f);
 	autoSaturation(false, 100.0f);
-	autoShutter(false, 7.5f);
+	autoShutter(false, 12.5f);
 	autoGain(false, 0.0f);
 
 	flycamError = flycam.StartCapture();

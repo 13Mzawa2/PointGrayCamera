@@ -8,7 +8,7 @@ public:
 	std::vector<cv::Mat> patternsW, patternsH, patternsWN, patternsHN; 
 	std::vector<cv::Mat> captureW, captureH, captureWN, captureHN;
 	cv::Mat patternListW, patternListH;			//	s”rows‚ªpatterns‚Ì—v‘f”‚Æˆê’v
-	cv::Mat map, mask;				//	Œ‹‰Ê‚ğ‚±‚±‚É•Û‘¶
+	cv::Mat mapX, mapY, mask;				//	Œ‹‰Ê‚ğ‚±‚±‚É•Û‘¶
 	cv::Mat camera2ProjectorMap;
 	cv::Size projectorSize, cameraSize;
 
@@ -20,7 +20,7 @@ public:
 	void makeGrayCodePatternLists(void);
 	void makeGrayCodeImages(void);
 	void init(cv::Size projectorSize, cv::Size cameraSize);
-	void getMask(cv::Mat white, cv::Mat black, int thresh = 20);
+	void getMask(int thresh = 20);
 	void loadCapPatterns(std::vector<cv::Mat> cap);
 	void decodePatterns(void);
 };

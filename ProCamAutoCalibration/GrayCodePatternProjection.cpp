@@ -13,6 +13,7 @@ GrayCodePatternProjection::GrayCodePatternProjection(Size projSize, Size camSize
 }
 
 //	初期化処理
+//	得られたプロジェクタ・カメラの画角を基にグレイコードパターンを生成する
 void GrayCodePatternProjection::init(cv::Size projSize, cv::Size camSize)
 {
 	projectorSize = projSize; cameraSize = camSize;
@@ -42,7 +43,7 @@ int GrayCodePatternProjection::bin2gray(int bin)
 //	gray = 0x6a = 0b01101010
 //	
 //	bin = gray       = 0b01101010
-//	mask = gray >> 1 = 0b00110101
+//	mask = gray >> 1 = 0b00110101 (begin)
 //	bin = bin ^ mask = 0b01011111
 //	mask = mask >> 1 = 0b00011010
 //	bin = bin ^ mask = 0b01000101
@@ -52,12 +53,14 @@ int GrayCodePatternProjection::bin2gray(int bin)
 //	bin = bin ^ mask = 0b01001110
 //	mask = mask >> 1 = 0b00000011
 //	bin = bin ^ mask = 0b01001101
-//	mask = mask >> 1 = 0b00000001(End)
+//	mask = mask >> 1 = 0b00000001
 //	bin = bin ^ mask = 0b01001100 = 0x4c = bin
+//	mask = mask >> 1 = 0b00000000 (end)
+//	bin = bin ^ mask = 0b01001100
 int GrayCodePatternProjection::gray2bin(int gray)
 {
-	int bin = gray, mask = gray;
-	for (mask >> 1; mask != 0; mask = mask >> 1)
+	int bin = gray, mask = gray >> 1;
+	for (; mask != 0; mask = mask >> 1)
 		bin = bin ^ mask;
 	return bin;
 }
@@ -83,7 +86,7 @@ void GrayCodePatternProjection::makeGrayCodePatternLists(void)
 {
 	//	最大ビット長lのカウント
 	int lw = 0, lh = 0;		//	プロジェクタ画像サイズそれぞれの最大ビット数
-	for (int x = projectorSize.width-1; x > 0; x = x >> 1) lw++;
+	for (int x = projectorSize.width - 1; x > 0; x = x >> 1) lw++;
 	for (int y = projectorSize.height - 1; y > 0; y = y >> 1) lh++;
 	//	0 ~ projSize.width (heigt) のグレイコードをビット化して行列に格納
 	//	行を取り出せばパターンになるようにする
@@ -91,7 +94,7 @@ void GrayCodePatternProjection::makeGrayCodePatternLists(void)
 	patternListH = Mat(Size(projectorSize.height, lh), CV_8UC1);
 	for (int i = 0; i < projectorSize.width; i++){
 		for (int j = lw; j > 0; j--){			//	最上位bitから調べていく
-			//	グレイコードの i の j bit目が1であれば1を，そうでなければ0を入れる
+			//	グレイコードの i の j bit目(段々小さくなる)が1であれば1を，そうでなければ0を画素値に入れる
 			patternListW.at<uchar>(lw - j, i) = (bin2gray(i) & (1 << (j - 1))) && 1;
 		}
 	}
@@ -131,22 +134,12 @@ void GrayCodePatternProjection::makeGrayCodeImages(void)
 }
 
 //	マスク画像を作成する
-void GrayCodePatternProjection::getMask(Mat white, Mat black, int thresh)
+void GrayCodePatternProjection::getMask(int thresh)
 {
-	Mat wg, bg;
-	cvtColor(white, wg, CV_BGR2GRAY);
-	cvtColor(black, bg, CV_BGR2GRAY);
-	Mat m = wg.clone();
-	for (int i = 0; i < m.rows; i++){
-		for (int j = 0; j < m.cols; j++)
-			m.at<uchar>(i, j) = ((wg.at<uchar>(i, j) - bg.at<uchar>(i, j)) > thresh) ? 1 : 0;
-	}
-	mask = m.clone();
 }
 
 //	撮影したパターンを読み込む
 //	capは w[0], wn[0], w[1], wn[1], ..., wn[wrows], h[0], hn[0], ..., hn[hrows]　の順
-//	capはCV_8UC3なので注意
 void GrayCodePatternProjection::loadCapPatterns(vector<Mat> cap)
 {
 	//	パターン配列の初期化
@@ -155,13 +148,29 @@ void GrayCodePatternProjection::loadCapPatterns(vector<Mat> cap)
 	//	投影画像の読み込み
 	for (int i = 0; i < patternListW.rows; i++)
 	{
-		captureW.push_back(cap[2 * i]);
-		captureWN.push_back(cap[2 * i + 1]);
+		int it = 2 * i;
+		if (cap[2 * i].channels() != 1)
+			cvtColor(cap[it], cap[it], CV_BGR2GRAY);
+		captureW.push_back(cap[it]);
+		cv::imwrite("images/graycodeW" + to_string(i) + ".jpg", cap[it]);
+
+		if (cap[it + 1].channels() != 1)
+			cvtColor(cap[it + 1], cap[it + 1], CV_BGR2GRAY);
+		captureWN.push_back(cap[it + 1]);
+		cv::imwrite("images/graycodeWN" + to_string(i) + ".jpg", cap[it + 1]);
 	}
 	for (int i = 0; i < patternListH.rows; i++)
 	{
-		captureH.push_back(cap[patternListW.rows + 2 * i]);
-		captureHN.push_back(cap[patternListW.rows + 2 * i + 1]);
+		int it = 2 * patternListW.rows + 2 * i;
+		if (cap[it].channels() != 1)
+			cvtColor(cap[it], cap[it], CV_BGR2GRAY);
+		captureH.push_back(cap[it]);
+		cv::imwrite("images/graycodeH" + to_string(i) + ".jpg", cap[it]);
+
+		if (cap[it + 1].channels() != 1)
+			cvtColor(cap[it + 1], cap[it + 1], CV_BGR2GRAY);
+		captureHN.push_back(cap[it + 1]);
+		cv::imwrite("images/graycodeHN" + to_string(i) + ".jpg", cap[it + 1]);
 	}
 }
 
@@ -169,35 +178,47 @@ void GrayCodePatternProjection::loadCapPatterns(vector<Mat> cap)
 //	unsigned int16で座標値を入力
 void GrayCodePatternProjection::decodePatterns()
 {
-	Mat temp(cameraSize, CV_16UC2);
-	for (int i = 0; i < temp.rows; i++)
+	Mat xtemp(cameraSize, CV_32FC1);
+	Mat ytemp(cameraSize, CV_32FC1);
+	int lw = patternListW.rows, lh = patternListH.rows;
+	cout << "patterns: x=" << lw << ", y=" << lh << endl;
+	for (int i = 0; i < xtemp.rows; i++)
 	{
-		for (int j = 0; j < temp.cols; j++)
+		for (int j = 0; j < xtemp.cols; j++)
 		{	//	画素毎に実行
-			int it = temp.step * i + temp.channels() * j;
 			//	x方向
 			int xgray = 0;
-			for (int k = 0; k < patternListW.rows; k++)
-			{	//	k枚目の画素の輝度がネガより大きければ1，そうでなければ0を対応するビットで立てる
-				Mat capWk, capWNk;
-				cvtColor(captureW[k], capWk, CV_BGR2GRAY);
-				cvtColor(captureWN[k], capWNk, CV_BGR2GRAY);
-				xgray = xgray | ((capWk.data[it] - capWNk.data[it]) > 0 ? 1 : 0) << (patternListW.rows - 1 - k);
+			for (int k = lw; k > 0; k--)
+			{	//	k bit目の画素の輝度がネガより大きければ1，そうでなければ0を対応するビットで立てる
+				int bit = (captureW[lw - k].at<uchar>(i, j) - captureWN[lw - k].at<uchar>(i, j)) > 0 ? 1 : 0;
+				bit = bit << (k - 1);
+				xgray = xgray | bit;
 			}
 			int xbin = gray2bin(xgray);
 			//	y方向
 			int ygray = 0;
-			for (int k = 0; k < patternListH.rows; k++)
-			{	//	k枚目の画素の輝度がネガより大きければ1，そうでなければ0を対応するビットで立てる
-				Mat capHk, capHNk;
-				cvtColor(captureH[k], capHk, CV_BGR2GRAY);
-				cvtColor(captureHN[k], capHNk, CV_BGR2GRAY);
-				ygray = ygray | ((capHk.data[it] - capHNk.data[it]) > 0 ? 1 : 0) << (patternListH.rows - 1 - k);
+			for (int k = lh; k > 0; k--)
+			{	//	k bit目の画素の輝度がネガより大きければ1，そうでなければ0を対応するビットで立てる
+				int bit = (captureH[lw - k].at<uchar>(i, j) - captureHN[lw - k].at<uchar>(i, j)) > 0 ? 1 : 0;
+				bit = bit << (k - 1);
+				ygray = ygray | bit;
 			}
 			int ybin = gray2bin(ygray);
 			// tempへデコードした座標値を代入
-			temp.data[it + 0] = xbin; 
-			temp.data[it + 1] = ybin;
+			xtemp.at<float>(i, j) = (float)xbin; 
+			ytemp.at<float>(i, j) = (float)ybin;
 		}
 	}
+	Mat x, y;
+	xtemp.convertTo(x, CV_8UC1, 255.0 / (projectorSize.width - 1));
+	ytemp.convertTo(y, CV_8UC1, 255.0 / (projectorSize.height - 1));
+	cv::imshow("x.png", x);
+	cv::imshow("y.png", y);
+	cv::imwrite("images/x.png", x);
+	cv::imwrite("images/y.png", y);
+	cv::waitKey(0);
+	cv::destroyWindow("x.png");
+	cv::destroyWindow("y.png");
+	mapX = xtemp.clone();
+	mapY = ytemp.clone();
 }

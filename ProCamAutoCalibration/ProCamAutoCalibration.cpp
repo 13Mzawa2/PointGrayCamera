@@ -9,12 +9,15 @@ using namespace std;
 using namespace cv;
 
 //	Constants
-const int imgNum = 30;			//	画像数
+const int imgNum = 20;			//	画像数
 const Size patternSize(7, 10);
 const int allPoints = imgNum * patternSize.width * patternSize.height;
 const double chessSize = 22.5;		//	mm
-const double interval = 300.0;
+const double chessboardInterval = 300.0;		//	チェスボード検出インターバル
 const Size projSize(1024, 768);
+const int projectionInterval = 100;			//	グレイコードパターンの撮影インターバル
+const char* projectorWindowName = "Projector";		//	全画面表示するプロジェクタ画面のID
+const char* cameraWindowName = "Camera";			//	カメラ画面のID
 
 //	Results
 Mat cameraMatrix;		//	カメラ内部行列
@@ -28,43 +31,17 @@ int main(void)
 	FlyCap2CVWrapper cam;
 	cv::Mat img = cam.readImage();
 
+	//	プロジェクタの準備
 	GrayCodePatternProjection gcp(projSize, img.size());
-	namedWindow("GrayCodePattern", CV_WINDOW_FREERATIO);
-	moveWindow("GrayCodePattern", -1024, 0);
-	setWindowProperty("GrayCodePattern", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
-	waitKey(0);
-	Mat imgWhite, imgBlack;
-	Mat whiteLight(projSize, CV_8UC1, Scalar(255));
-	Mat blackLight(projSize, CV_8UC1, Scalar(0));
-	imshow("GrayCodePattern", blackLight);
-	waitKey(500);
-	imgBlack = cam.readImage();
-	imshow("Mask", imgBlack);
-	waitKey(500);
-	imshow("GrayCodePattern", whiteLight);
-	waitKey(500);
-	imgWhite = cam.readImage();
-	imshow("Mask", imgWhite);
-	waitKey(500);
-	gcp.getMask(imgWhite, imgBlack, 10);
-	imshow("Mask", 255*gcp.mask);
-	waitKey(0);
+	namedWindow(projectorWindowName, CV_WINDOW_FREERATIO);
+	moveWindow(projectorWindowName, -1024, 0);
+	setWindowProperty(projectorWindowName, CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+	Mat whiteLight(projSize, CV_8U, Scalar(255));
+	imshow(projectorWindowName, whiteLight);
 
-	for (int i = 0; i < gcp.patternListW.rows; i++)
-	{
-		imshow("GrayCodePattern", gcp.patternsW[i]);
-		waitKey(0);
-		imshow("GrayCodePattern", gcp.patternsWN[i]);
-		waitKey(0);
-	}
-	for (int i = 0; i < gcp.patternListH.rows; i++)
-	{
-		imshow("GrayCodePattern", gcp.patternsH[i]);
-		waitKey(0);
-		imshow("GrayCodePattern", gcp.patternsHN[i]);
-		waitKey(0);
-	}
-
+	//-----------------------------------------
+	//	1. カメラキャリブレーション
+	//-----------------------------------------
 	vector<vector<Point3f>> corners3d(imgNum);		//	チェスボード座標系での3次元点
 	vector<vector<Point2f>> corners2d;				//	検出されたカメラ座標コーナー点
 
@@ -77,6 +54,7 @@ int main(void)
 	}
 	//	チェスボード自動検出
 	//	画角内でチェスボードを動かすと自動的にとれる
+	std::cout << "Please Move " << patternSize << " Chessboard in your projection area." << endl;
 	for (int imgFound = 0; imgFound < imgNum;)
 	{
 		//	タイマー
@@ -90,7 +68,7 @@ int main(void)
 		vector<Point2f> corners;
 		bool patternfound = findChessboardCorners(img, patternSize, corners,
 			CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE | CALIB_CB_FAST_CHECK);
-		if (patternfound && timer > interval)
+		if (patternfound && timer > chessboardInterval)
 		{	//	見つかった場合
 			imgFound++;
 			timer = 0.0; count = getTickCount();		//	インターバルタイマーを初期化
@@ -102,9 +80,9 @@ int main(void)
 		if (waitKey(1) == 'q') exit(0);
 		timer = (getTickCount() - count)*1000.0 / getTickFrequency();
 	}
-	//	Start Calibration
+	//	Calibration Start
 	//	パラメータ推定
-	cout << "Start Calibration..." << endl;
+	cout << "Calculating Camera Inner Matrix and Distortion Parameters..." << endl;
 	cv::calibrateCamera(
 		corners3d, corners2d,
 		img.size(),
@@ -114,10 +92,56 @@ int main(void)
 	//	歪み補正マップ計算
 	cout << "Making Undistort Map..." << endl;
 	initUndistortRectifyMap(
-		cameraMatrix, distCoeffs, 
+		cameraMatrix, distCoeffs,
 		Mat(), cameraMatrix, img.size(), CV_16SC2,
 		map1, map2);
-	cout << "Calibration Ended." << endl;
+	cout << "Camera Calibration Ended." << endl;
+	cv::waitKey(0);
+
+	//-----------------------------------------
+	//	2. カメラ・プロジェクタ画素対応取得
+	//	   （グレイコードパターン投影法）
+	//-----------------------------------------
+	cout << "Projector-Camera Calibration is starting..." << endl;
+
+	//	グレイコードパターン投影
+	vector<Mat> captures;
+	for (int i = 0; i < gcp.patternListW.rows; i++)
+	{	//	W, WN
+		imshow(projectorWindowName, gcp.patternsW[i]);
+		waitKey(projectionInterval);
+		img = cam.readImage();
+		flip(img, img, 1);
+		remap(img, img, map1, map2, INTER_CUBIC);
+		captures.push_back(img);
+		imshow(projectorWindowName, gcp.patternsWN[i]);
+		waitKey(projectionInterval);
+		img = cam.readImage();
+		flip(img, img, 1);
+		remap(img, img, map1, map2, INTER_CUBIC);
+		captures.push_back(img);
+	}
+	for (int i = 0; i < gcp.patternListH.rows; i++)
+	{	//	H, HN
+		imshow(projectorWindowName, gcp.patternsH[i]);
+		waitKey(projectionInterval);
+		img = cam.readImage();
+		flip(img, img, 1);
+		remap(img, img, map1, map2, INTER_CUBIC);
+		captures.push_back(img);
+		imshow(projectorWindowName, gcp.patternsHN[i]);
+		waitKey(projectionInterval);
+		img = cam.readImage();
+		flip(img, img, 1);
+		remap(img, img, map1, map2, INTER_CUBIC);
+		captures.push_back(img);
+	}
+
+	//	グレイコードパターン解析
+	gcp.loadCapPatterns(captures);
+	gcp.decodePatterns();
+
+	waitKey(0);
 
 	// capture loop
 	char key = 0;
