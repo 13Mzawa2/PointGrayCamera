@@ -31,8 +31,6 @@ Mat map1Proj, map2Proj;		//	プロジェクタの歪み補正マップ
 Mat RProCam, TProCam;	//	カメラ-プロジェクタ間の回転行列・並進ベクトル
 Mat EProCam, FProCam;	//	カメラ-プロジェクタ間の基本行列，基礎行列
 
-Point3d operator*(Mat M, const Point3d& p);
-
 int main(void)
 {
 	FlyCap2CVWrapper cam;
@@ -289,17 +287,4 @@ int main(void)
 		<< "}";
 
 	return 0;
-}
-
-//	Point3f = Mat * Point3f　の行列演算オペレータ
-Point3d operator*(Mat M, const Point3d& p)
-{
-	Mat src(3/*rows*/, 1 /* cols */, CV_64F);
-
-	src.at<double>(0, 0) = p.x;
-	src.at<double>(1, 0) = p.y;
-	src.at<double>(2, 0) = p.z;
-
-	Mat dst = M*src; //USE MATRIX ALGEBRA
-	return Point3d(dst.at<double>(0, 0), dst.at<double>(1, 0), dst.at<double>(2, 0));
 }
