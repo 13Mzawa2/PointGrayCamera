@@ -95,7 +95,8 @@ int main(void)
 		cameraMatrix, distCoeffs,
 		Mat(), cameraMatrix, img.size(), CV_16SC2,
 		map1, map2);
-	cout << "Camera Calibration Ended." << endl;
+	cout << "Camera Calibration Ended.\n"
+		<< "Press any key, and projector-camera calibration will begin." << endl;
 	cv::waitKey(0);
 
 	//-----------------------------------------
@@ -138,10 +139,16 @@ int main(void)
 	}
 
 	//	グレイコードパターン解析
+	cout << "Decoding gray code patterns..." << endl;
 	gcp.loadCapPatterns(captures);
 	gcp.decodePatterns();
+	cout << "Correspondence maps are generated." << endl;
+	gcp.showMaps();
 
 	waitKey(0);
+
+
+
 
 	// capture loop
 	char key = 0;

@@ -23,5 +23,6 @@ public:
 	void getMask(int thresh = 20);
 	void loadCapPatterns(std::vector<cv::Mat> cap);
 	void decodePatterns(void);
+	void showMaps(void);
 };
 

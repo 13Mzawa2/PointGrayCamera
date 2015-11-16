@@ -181,7 +181,7 @@ void GrayCodePatternProjection::decodePatterns()
 	Mat xtemp(cameraSize, CV_32FC1);
 	Mat ytemp(cameraSize, CV_32FC1);
 	int lw = patternListW.rows, lh = patternListH.rows;
-	cout << "patterns: x=" << lw << ", y=" << lh << endl;
+	//cout << "patterns: x=" << lw << ", y=" << lh << endl;
 	for (int i = 0; i < xtemp.rows; i++)
 	{
 		for (int j = 0; j < xtemp.cols; j++)
@@ -209,9 +209,15 @@ void GrayCodePatternProjection::decodePatterns()
 			ytemp.at<float>(i, j) = (float)ybin;
 		}
 	}
+	mapX = xtemp.clone();
+	mapY = ytemp.clone();
+}
+
+void GrayCodePatternProjection::showMaps()
+{
 	Mat x, y;
-	xtemp.convertTo(x, CV_8UC1, 255.0 / (projectorSize.width - 1));
-	ytemp.convertTo(y, CV_8UC1, 255.0 / (projectorSize.height - 1));
+	mapX.convertTo(x, CV_8UC1, 255.0 / (projectorSize.width - 1));
+	mapY.convertTo(y, CV_8UC1, 255.0 / (projectorSize.height - 1));
 	cv::imshow("x.png", x);
 	cv::imshow("y.png", y);
 	cv::imwrite("images/x.png", x);
@@ -219,6 +225,4 @@ void GrayCodePatternProjection::decodePatterns()
 	cv::waitKey(0);
 	cv::destroyWindow("x.png");
 	cv::destroyWindow("y.png");
-	mapX = xtemp.clone();
-	mapY = ytemp.clone();
 }
