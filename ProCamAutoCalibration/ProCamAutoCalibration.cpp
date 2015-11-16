@@ -9,7 +9,7 @@ using namespace std;
 using namespace cv;
 
 //	Constants
-const int imgNum = 20;			//	画像数
+const int imgNum = 30;			//	画像数
 const Size patternSize(7, 10);
 const int allPoints = imgNum * patternSize.width * patternSize.height;
 const double chessSize = 22.5;		//	mm
@@ -93,15 +93,16 @@ int main(void)
 	cout << "Making Undistort Map..." << endl;
 	initUndistortRectifyMap(
 		cameraMatrix, distCoeffs,
-		Mat(), cameraMatrix, img.size(), CV_16SC2,
+		Mat(), cameraMatrix, img.size(), CV_32FC1,
 		map1, map2);
 	cout << "Camera Calibration Ended.\n"
 		<< "Press any key, and projector-camera calibration will begin." << endl;
 	cv::waitKey(0);
 
 	//-----------------------------------------
-	//	2. カメラ・プロジェクタ画素対応取得
-	//	   （グレイコードパターン投影法）
+	//	2.	カメラ・プロジェクタ画素対応取得
+	//		（グレイコードパターン投影法）
+	//		歪み補正済みカメラとプロジェクタ
 	//-----------------------------------------
 	cout << "Projector-Camera Calibration is starting..." << endl;
 
@@ -147,8 +148,52 @@ int main(void)
 
 	waitKey(0);
 
-
-
+	//-----------------------------------------
+	//	3. プロジェクタキャリブレーション
+	//-----------------------------------------
+	//	取得済みのカメラ座標2次元コーナーの歪みを除去
+	vector<vector<Point2f>> corners2dUndistorted;
+	for (int i = 0; i < imgNum; i++)
+	{
+		vector<Point2f> points;
+		for (int j = 0; j < patternSize.height; j++){
+			for (int k = 0; k < patternSize.width; k++)
+			{	//	getRectSubPix()を3x3の矩形サイズで利用すことでピクセルをバイリニア補間
+				Point2f p = (corners2d[i])[j*patternSize.width + k];		//	歪み補正前
+				Size patchSize(3, 3);
+				Mat patchX, patchY;
+				getRectSubPix(map1, patchSize, p, patchX);
+				getRectSubPix(map2, patchSize, p, patchY);
+				Point2f pu(patchX.at<float>(1, 1), patchY.at<float>(1, 1));			//	歪み補正後
+				points.push_back(pu);
+			}
+		}
+		corners2dUndistorted.push_back(points);
+	}
+	//	マップを使ってプロジェクタ座標に変換
+	vector<vector<Point2f>> corners2dProj;
+	for (int i = 0; i < imgNum; i++)
+	{
+		vector<Point2f> points;
+		for (int j = 0; j < patternSize.height; j++){
+			for (int k = 0; k < patternSize.width; k++)
+			{	//	getRectSubPix()を3x3の矩形サイズで利用すことでピクセルをバイリニア補間
+				Point2f pcam = (corners2dUndistorted[i])[j*patternSize.width + k];		//	カメラのサブピクセル座標
+				Size patchSize(3, 3);
+				Mat patchX, patchY;
+				getRectSubPix(gcp.mapX, patchSize, pcam, patchX);
+				getRectSubPix(gcp.mapY, patchSize, pcam, patchY);
+				Point2f pproj(patchX.at<float>(1, 1), patchY.at<float>(1, 1));		//	プロジェクタのサブピクセル座標
+				points.push_back(pproj);
+			}
+		}
+		corners2dProj.push_back(points);
+	}
+		//	コーナー点を投影(テスト用)
+		Mat mapped(projSize, CV_8UC3, Scalar::all(255));
+		drawChessboardCorners(mapped, patternSize, Mat(corners2dProj[imgNum-1]), true);
+		imshow(projectorWindowName, mapped);
+		waitKey(0);
 
 	// capture loop
 	char key = 0;
