@@ -109,6 +109,10 @@ void GrayCodePatternProjection::makeGrayCodePatternLists(void)
 //	1番目が最上位ビット
 void GrayCodePatternProjection::makeGrayCodeImages(void)
 {
+	//	パターン配列を初期化
+	patternsW.clear(); patternsWN.clear();
+	patternsH.clear(); patternsHN.clear();
+	
 	for (int i = 0; i < patternListW.rows; i++)
 	{
 		Mat pattern(projectorSize, CV_8UC1);
@@ -138,4 +142,62 @@ void GrayCodePatternProjection::getMask(Mat white, Mat black, int thresh)
 			m.at<uchar>(i, j) = ((wg.at<uchar>(i, j) - bg.at<uchar>(i, j)) > thresh) ? 1 : 0;
 	}
 	mask = m.clone();
+}
+
+//	撮影したパターンを読み込む
+//	capは w[0], wn[0], w[1], wn[1], ..., wn[wrows], h[0], hn[0], ..., hn[hrows]　の順
+//	capはCV_8UC3なので注意
+void GrayCodePatternProjection::loadCapPatterns(vector<Mat> cap)
+{
+	//	パターン配列の初期化
+	captureW.clear(); captureWN.clear();
+	captureH.clear(); captureHN.clear();
+	//	投影画像の読み込み
+	for (int i = 0; i < patternListW.rows; i++)
+	{
+		captureW.push_back(cap[2 * i]);
+		captureWN.push_back(cap[2 * i + 1]);
+	}
+	for (int i = 0; i < patternListH.rows; i++)
+	{
+		captureH.push_back(cap[patternListW.rows + 2 * i]);
+		captureHN.push_back(cap[patternListW.rows + 2 * i + 1]);
+	}
+}
+
+//	読み込んだパターンを解読してマップ化
+//	unsigned int16で座標値を入力
+void GrayCodePatternProjection::decodePatterns()
+{
+	Mat temp(cameraSize, CV_16UC2);
+	for (int i = 0; i < temp.rows; i++)
+	{
+		for (int j = 0; j < temp.cols; j++)
+		{	//	画素毎に実行
+			int it = temp.step * i + temp.channels() * j;
+			//	x方向
+			int xgray = 0;
+			for (int k = 0; k < patternListW.rows; k++)
+			{	//	k枚目の画素の輝度がネガより大きければ1，そうでなければ0を対応するビットで立てる
+				Mat capWk, capWNk;
+				cvtColor(captureW[k], capWk, CV_BGR2GRAY);
+				cvtColor(captureWN[k], capWNk, CV_BGR2GRAY);
+				xgray = xgray | ((capWk.data[it] - capWNk.data[it]) > 0 ? 1 : 0) << (patternListW.rows - 1 - k);
+			}
+			int xbin = gray2bin(xgray);
+			//	y方向
+			int ygray = 0;
+			for (int k = 0; k < patternListH.rows; k++)
+			{	//	k枚目の画素の輝度がネガより大きければ1，そうでなければ0を対応するビットで立てる
+				Mat capHk, capHNk;
+				cvtColor(captureH[k], capHk, CV_BGR2GRAY);
+				cvtColor(captureHN[k], capHNk, CV_BGR2GRAY);
+				ygray = ygray | ((capHk.data[it] - capHNk.data[it]) > 0 ? 1 : 0) << (patternListH.rows - 1 - k);
+			}
+			int ybin = gray2bin(ygray);
+			// tempへデコードした座標値を代入
+			temp.data[it + 0] = xbin; 
+			temp.data[it + 1] = ybin;
+		}
+	}
 }
