@@ -9,10 +9,10 @@ using namespace std;
 using namespace cv;
 
 //	Constants
-const int imgNum = 30;			//	画像数
+const int imgNum = 40;			//	画像数
 const Size patternSize(7, 10);
 const int allPoints = imgNum * patternSize.width * patternSize.height;
-const double chessSize = 22.5;		//	mm
+const double chessSize = 20.5;		//	mm
 const double chessboardInterval = 300.0;		//	チェスボード検出インターバル
 const Size projSize(1024, 768);
 const int projectionInterval = 100;			//	グレイコードパターンの撮影インターバル
