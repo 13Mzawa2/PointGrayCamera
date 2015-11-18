@@ -58,7 +58,10 @@ int main(void)
 		}
 	}
 	//	チェスボード自動検出
-	//	画角内でチェスボードを動かすと自動的にとれる
+	//	画角内でチェスボードを3次元的に動かすと自動的にとれる
+	//	注：数学的には平面でしか成り立たないが，
+	//	　　カメラとプロジェクタの位置が近く，奥行によって投影像が変化しにくい場合は
+	//	　　3次元的に動かした方が結果的に精度が良くなるようだ．
 	std::cout << "Please Move " << patternSize << " Chessboard in your projection area." << endl;
 	for (int imgFound = 0; imgFound < imgNum;)
 	{
@@ -87,21 +90,24 @@ int main(void)
 	}
 	//	Calibration Start
 	//	パラメータ推定
+	cout << "All Chessboard is found!\n";
 	cout << "Calculating Camera Inner Matrix and Distortion Parameters..." << endl;
 	cv::calibrateCamera(
 		corners3d, corners2d,
 		img.size(),
 		cameraMatrix, distCoeffs,
 		rvecs, tvecs);
-	cout << "Camera Matirx = \n" << cameraMatrix << "\nDistortion Coeffs = \n" << distCoeffs << endl;
+	cout << "Camera Matirx = \n" << cameraMatrix
+		<< "\nDistortion Coeffs = \n" << distCoeffs
+		<< "\n" << endl;
 	//	歪み補正マップ計算
 	cout << "Making Undistort Map..." << endl;
 	initUndistortRectifyMap(
 		cameraMatrix, distCoeffs,
 		Mat(), cameraMatrix, img.size(), CV_32FC1,
 		map1, map2);
-	cout << "Camera Calibration Ended.\n"
-		<< "Press any key, and projector-camera calibration will begin." << endl;
+	cout << "\nCamera Calibration finished!.\n\n"
+		<< "Press any key, and projector-camera pixel coordination will begin." << endl;
 	cv::waitKey(0);
 
 	//-----------------------------------------
@@ -109,7 +115,7 @@ int main(void)
 	//		（グレイコードパターン投影法）
 	//		歪み補正済みカメラとプロジェクタ
 	//-----------------------------------------
-	cout << "Projector-Camera Calibration is starting..." << endl;
+	cout << "Projecting Gray Code Patterns..." << endl;
 
 	//	グレイコードパターン投影
 	vector<Mat> captures;
@@ -148,7 +154,8 @@ int main(void)
 	cout << "Decoding gray code patterns..." << endl;
 	gcp.loadCapPatterns(captures);
 	gcp.decodePatterns();
-	cout << "Correspondence maps are generated." << endl;
+	cout << "Correspondence maps are generated.\n"
+		<< "Press any key, and Projector Camera Parameter Calibration will begin.\n" << endl;
 	gcp.showMaps();
 
 	//-----------------------------------------
@@ -205,18 +212,21 @@ int main(void)
 	cout << "Calculating Projector Inner Matrix and Distortion Parameters..." << endl;
 	cv::calibrateCamera(
 		corners3d, corners2dProj,
-		img.size(),
+		projSize,
 		cameraMatrixProj,distCoeffsProj,
 		rvecsProj, tvecsProj);
-	cout << "Projector Camera Matirx = \n" << cameraMatrix << "\nProjector Distortion Coeffs = \n" << distCoeffs << endl;
+	cout << "Projector Camera Matirx = \n" << cameraMatrix
+		<< "\nProjector Distortion Coeffs = \n" << distCoeffs
+		<< "\n" << endl;
 	//	歪み補正マップ計算
 	cout << "Making Projector Undistort Map..." << endl;
 	initUndistortRectifyMap(
 		cameraMatrixProj, distCoeffsProj,
-		Mat(), cameraMatrixProj, img.size(), CV_32FC1,
+		Mat(), cameraMatrixProj, projSize, CV_32FC1,
 		map1Proj, map2Proj);
 	//	カメラ - プロジェクタ外部行列の推定
 	cout << "Caluculating Camera-Projector outer parameters..." << endl;
+	//Mat cameraMatrixProjCamSize = cv::getDefaultNewCameraMatrix(cameraMatrixProj, img.size(), true);
 	cv::stereoCalibrate(
 		corners3d, corners2d, corners2dProj,		//	コーナー点群
 		cameraMatrix, distCoeffs,					//	カメラパラメータ
@@ -260,6 +270,7 @@ int main(void)
 			//	チェスコーナーを描画 上手くいけば重なるはず
 			Mat drawPattern(projSize, CV_8UC3, Scalar::all(255));
 			drawChessboardCorners(drawPattern, patternSize, Mat(cornersProj), patternfound);
+			remap(drawPattern, drawPattern, map1Proj, map2Proj, INTER_CUBIC);
 			imshow(projectorWindowName, drawPattern);
 		}
 		cv::imshow("calibrated", imgUndistorted);
