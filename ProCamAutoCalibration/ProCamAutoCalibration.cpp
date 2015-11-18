@@ -281,11 +281,13 @@ int main(void)
 	FileStorage fs("calibdata.xml", FileStorage::WRITE);
 	fs << "Camera"
 		<< "{"
+		<< "size" << img.size()
 		<< "CameraMatrix" << cameraMatrix
 		<< "DistCoeffs" << distCoeffs
 		<< "}"
 		<< "Projector"
 		<< "{"
+		<< "size" << projSize
 		<< "CameraMatrix" << cameraMatrixProj
 		<< "Distcoeffs" << distCoeffsProj
 		<< "}"
@@ -296,6 +298,10 @@ int main(void)
 		<< "E" << EProCam
 		<< "F" << FProCam
 		<< "}";
+	imwrite("UndistortMap1Cam.png", map1);
+	imwrite("UndistortMap2Cam.png", map2);
+	imwrite("UndistortMap1Pro.png", map1Proj);
+	imwrite("UndistortMap2Pro.png", map2Proj);
 
 	return 0;
 }
