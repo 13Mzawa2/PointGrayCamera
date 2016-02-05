@@ -24,6 +24,7 @@ Mat map1, map2;			//	歪み補正マップ
 int main(void)
 {
 	FlyCap2CVWrapper cam;
+	//VideoCapture cam(0);
 	vector<vector<Point3f>> corners3d(imgNum);		//	チェスボード座標系での3次元点
 	vector<vector<Point2f>> corners2d;				//	検出されたカメラ座標コーナー点
 
@@ -44,6 +45,7 @@ int main(void)
 		static int64 count = getTickCount();
 		//	画像取得
 		img = cam.readImage();
+		//cam >> img;
 		flip(img, img, 1);
 		//	チェスボード検出
 		//	1000msのインターバルを設けている
@@ -85,6 +87,8 @@ int main(void)
 	{	// Get the image
 		cv::Mat image = cam.readImage();
 		flip(image, image, 1);
+		//cv::Mat image;
+		//cam >> image;
 		Mat imgUndistorted;
 		remap(image, imgUndistorted, map1, map2, INTER_CUBIC);
 		cv::imshow("calibrated", imgUndistorted);
@@ -93,10 +97,11 @@ int main(void)
 
 	//	save as XML, PNG
 	FileStorage fs("calibdata.xml", FileStorage::WRITE);
-	fs << "calibration"
+	fs << "Camera"
 		<< "{"
 		<< "CameraMatrix" << cameraMatrix
 		<< "DistCoeffs" << distCoeffs
+		<< "size" << img.size()
 		<< "}";
 
 	return 0;

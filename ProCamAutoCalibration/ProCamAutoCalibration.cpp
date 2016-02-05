@@ -9,7 +9,7 @@ using namespace std;
 using namespace cv;
 
 //	Constants
-const int imgNum = 40;			//	画像数
+const int imgNum = 10;			//	画像数
 const Size patternSize(7, 10);
 const int allPoints = imgNum * patternSize.width * patternSize.height;
 const double chessSize = 20.5;		//	mm
@@ -71,10 +71,12 @@ int main(void)
 		//	画像取得
 		img = cam.readImage();
 		flip(img, img, 1);
+		vector<Mat> channels;
+		split(img, channels);
 		//	チェスボード検出
 		//	1000msのインターバルを設けている
 		vector<Point2f> corners;
-		bool patternfound = findChessboardCorners(img, patternSize, corners,
+		bool patternfound = findChessboardCorners(channels[2], patternSize, corners,
 			CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE | CALIB_CB_FAST_CHECK);
 		if (patternfound && timer > chessboardInterval)
 		{	//	見つかった場合
