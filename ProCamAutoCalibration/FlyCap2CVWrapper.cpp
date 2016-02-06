@@ -45,7 +45,7 @@ FlyCap2CVWrapper::FlyCap2CVWrapper()
 	autoExposure(false, 1.585f);
 	autoSaturation(false, 100.0f);
 	autoShutter(false, 12.5f);
-	autoGain(false, 0.0f);
+	autoGain(false, 4.0f);
 
 	flycamError = flycam.StartCapture();
 	if (flycamError == PGRERROR_ISOCH_BANDWIDTH_EXCEEDED)
