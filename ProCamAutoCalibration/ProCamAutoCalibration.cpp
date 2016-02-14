@@ -45,7 +45,7 @@ int main(void)
 	imshow(projectorWindowName, whiteLight);
 
 	//-----------------------------------------
-	//	1. カメラキャリブレーション
+	//	0. チェスボード座標の計算
 	//-----------------------------------------
 	vector<vector<Point3f>> corners3d(imgNum);		//	チェスボード座標系での3次元点
 	vector<vector<Point2f>> corners2d;				//	検出されたカメラ座標コーナー点
@@ -57,60 +57,60 @@ int main(void)
 				corners3d[i].push_back(Point3f(k * chessSize, j * chessSize, 0.0));
 		}
 	}
-	//	チェスボード自動検出
-	//	画角内でチェスボードを3次元的に動かすと自動的にとれる
-	std::cout << "Please Move " << patternSize << " Chessboard in your projection area." << endl;
-	for (int imgFound = 0; imgFound < imgNum;)
-	{
-		//	タイマー
-		static double timer = 0.0;
-		static int64 count = getTickCount();
-		//	画像取得
-		img = cam.readImage();
-		flip(img, img, 1);
-		vector<Mat> imgChannels;
-		split(img, imgChannels);
-		//	チェスボード検出
-		//	1000msのインターバルを設けている
-		vector<Point2f> corners;
-		bool patternfound = findChessboardCorners(imgChannels[2], patternSize, corners,
-			CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE | CALIB_CB_FAST_CHECK);
-		if (patternfound && timer > chessboardInterval)
-		{	//	見つかった場合
-			imgFound++;
-			timer = 0.0; count = getTickCount();		//	インターバルタイマーを初期化
-			cout << "Chessboard No. " << imgFound << " / " << imgNum << " is found at " << corners[0] << endl;
-			corners2d.push_back(corners);
-			drawChessboardCorners(imgChannels[2], patternSize, Mat(corners), patternfound);
-		}
-		imshow("Chessboard", imgChannels[2]);
-		if (waitKey(1) == 'q') exit(0);
-		timer = (getTickCount() - count)*1000.0 / getTickFrequency();
-	}
-	//	Calibration Start
-	//	パラメータ推定
-	cout << "All Chessboard is found!\n";
-	cout << "Calculating Camera Inner Matrix and Distortion Parameters..." << endl;
-	cv::calibrateCamera(
-		corners3d, corners2d,
-		img.size(),
-		cameraMatrix, distCoeffs,
-		rvecs, tvecs);
-	cout << "Camera Matirx = \n" << cameraMatrix
-		<< "\nDistortion Coeffs = \n" << distCoeffs
-		<< "\n" << endl;
-	//	歪み補正マップ計算
-	cout << "Making Undistort Map..." << endl;
-	initUndistortRectifyMap(
-		cameraMatrix, distCoeffs,
-		Mat(), cameraMatrix, img.size(), CV_32FC1,
-		map1, map2);
-	cout << "\nCamera Calibration finished!.\n\n"
-		<< "Press any key, and projector-camera pixel coordination will begin." << endl;
-	cv::waitKey(0);
+	////	チェスボード自動検出
+	////	画角内でチェスボードを3次元的に動かすと自動的にとれる
+	//std::cout << "Please Move " << patternSize << " Chessboard in your projection area." << endl;
+	//for (int imgFound = 0; imgFound < imgNum;)
+	//{
+	//	//	タイマー
+	//	static double timer = 0.0;
+	//	static int64 count = getTickCount();
+	//	//	画像取得
+	//	img = cam.readImage();
+	//	flip(img, img, 1);
+	//	vector<Mat> imgChannels;
+	//	split(img, imgChannels);
+	//	//	チェスボード検出
+	//	//	1000msのインターバルを設けている
+	//	vector<Point2f> corners;
+	//	bool patternfound = findChessboardCorners(imgChannels[2], patternSize, corners,
+	//		CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE | CALIB_CB_FAST_CHECK);
+	//	if (patternfound && timer > chessboardInterval)
+	//	{	//	見つかった場合
+	//		imgFound++;
+	//		timer = 0.0; count = getTickCount();		//	インターバルタイマーを初期化
+	//		cout << "Chessboard No. " << imgFound << " / " << imgNum << " is found at " << corners[0] << endl;
+	//		corners2d.push_back(corners);
+	//		drawChessboardCorners(imgChannels[2], patternSize, Mat(corners), patternfound);
+	//	}
+	//	imshow("Chessboard", imgChannels[2]);
+	//	if (waitKey(1) == 'q') exit(0);
+	//	timer = (getTickCount() - count)*1000.0 / getTickFrequency();
+	//}
+	////	Calibration Start
+	////	パラメータ推定
+	//cout << "All Chessboard is found!\n";
+	//cout << "Calculating Camera Inner Matrix and Distortion Parameters..." << endl;
+	//cv::calibrateCamera(
+	//	corners3d, corners2d,
+	//	img.size(),
+	//	cameraMatrix, distCoeffs,
+	//	rvecs, tvecs);
+	//cout << "Camera Matirx = \n" << cameraMatrix
+	//	<< "\nDistortion Coeffs = \n" << distCoeffs
+	//	<< "\n" << endl;
+	////	歪み補正マップ計算
+	//cout << "Making Undistort Map..." << endl;
+	//initUndistortRectifyMap(
+	//	cameraMatrix, distCoeffs,
+	//	Mat(), cameraMatrix, img.size(), CV_32FC1,
+	//	map1, map2);
+	//cout << "\nCamera Calibration finished!.\n\n"
+	//	<< "Press any key, and projector-camera pixel coordination will begin." << endl;
+	//cv::waitKey(0);
 
 	//-----------------------------------------
-	//	2.	カメラ・プロジェクタ画素対応取得
+	//	1.	カメラ・プロジェクタ画素対応取得
 	//		（グレイコードパターン投影法）
 	//		歪み補正前カメラとプロジェクタ
 	//-----------------------------------------
@@ -128,11 +128,9 @@ int main(void)
 		//	Spaceキーが押されたら水色チェスボード認識開始
 		if (c == ' ')
 		{
-			vector<Mat> imgChannels;
-			split(img, imgChannels);
 			//	チェスボード検出
 			vector<Point2f> corners;
-			bool patternfound = findChessboardCorners(imgChannels[2], patternSize, corners,
+			bool patternfound = findChessboardCorners(img, patternSize, corners,
 				CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE + CALIB_CB_FILTER_QUADS + CALIB_CB_FAST_CHECK);
 			if (patternfound)
 			{
@@ -199,7 +197,27 @@ int main(void)
 		}		//	チェスボード検出終了
 		if (c == 'q') exit(0);
 	}
-
+	//-----------------------------------------
+	//	2. カメラキャリブレーション
+	//-----------------------------------------
+	//	Calibration Start
+	//	パラメータ推定
+	cout << "All Chessboard is found!\n";
+	cout << "Calculating Camera Inner Matrix and Distortion Parameters..." << endl;
+	cv::calibrateCamera(
+		corners3d, corners2dCam,
+		img.size(),
+		cameraMatrix, distCoeffs,
+		rvecs, tvecs);
+	cout << "Camera Matirx = \n" << cameraMatrix
+		<< "\nDistortion Coeffs = \n" << distCoeffs
+		<< "\n" << endl;
+	//	歪み補正マップ計算
+	cout << "Making Undistort Map..." << endl;
+	initUndistortRectifyMap(
+		cameraMatrix, distCoeffs,
+		Mat(), cameraMatrix, img.size(), CV_32FC1,
+		map1, map2);
 	//-----------------------------------------
 	//	3. プロジェクタキャリブレーション
 	//-----------------------------------------
