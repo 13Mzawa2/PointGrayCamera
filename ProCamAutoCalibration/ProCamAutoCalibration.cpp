@@ -12,7 +12,7 @@ using namespace cv;
 const int imgNum = 15;			//	画像数
 const Size patternSize(7, 10);
 const int allPoints = imgNum * patternSize.width * patternSize.height;
-const double chessSize = 25.0;		//	mm
+const double chessSize = 22.5;		//	mm
 const double chessboardInterval = 600.0;		//	チェスボード検出インターバル
 const Size projSize(1024, 768);
 const int projectionInterval = 100;			//	グレイコードパターンの撮影インターバル
@@ -112,7 +112,7 @@ int main(void)
 	//-----------------------------------------
 	//	2.	カメラ・プロジェクタ画素対応取得
 	//		（グレイコードパターン投影法）
-	//		歪み補正済みカメラとプロジェクタ
+	//		歪み補正前カメラとプロジェクタ
 	//-----------------------------------------
 	vector<vector<Point2f>> corners2dCam;				//	検出されたカメラ座標コーナー点
 	vector<vector<Point2f>> corners2dProj;				//	↑のプロジェクタ座標コーナー点
@@ -122,7 +122,7 @@ int main(void)
 		//	画像取得
 		img = cam.readImage();
 		flip(img, img, 1);
-		remap(img, img, map1, map2, INTER_CUBIC);
+		//remap(img, img, map1, map2, INTER_CUBIC);
 		int c = waitKey(1);
 		imshow("Chessboard", img);
 		//	Spaceキーが押されたら水色チェスボード認識開始
@@ -138,7 +138,7 @@ int main(void)
 			{
 				imgFound++;
 				cout << "Chessboard No. " << imgFound << " / " << imgNum << " is found at " << corners[0] << endl;
-				corners2dCam.push_back(corners);			//	歪み補正済みカメラ座標
+				corners2dCam.push_back(corners);			//	歪み補正前カメラ座標
 				//	認識できたらグレイコードパターン投影
 				vector<Mat> captures;
 				for (int i = 0; i < gcp.patternListW.rows; i++)
@@ -147,13 +147,13 @@ int main(void)
 					waitKey(projectionInterval);
 					img = cam.readImage();
 					flip(img, img, 1);
-					remap(img, img, map1, map2, INTER_CUBIC);
+					//remap(img, img, map1, map2, INTER_CUBIC);
 					captures.push_back(img);
 					imshow(projectorWindowName, gcp.patternsWN[i]);
 					waitKey(projectionInterval);
 					img = cam.readImage();
 					flip(img, img, 1);
-					remap(img, img, map1, map2, INTER_CUBIC);
+					//remap(img, img, map1, map2, INTER_CUBIC);
 					captures.push_back(img);
 				}
 				for (int i = 0; i < gcp.patternListH.rows; i++)
@@ -162,13 +162,13 @@ int main(void)
 					waitKey(projectionInterval);
 					img = cam.readImage();
 					flip(img, img, 1);
-					remap(img, img, map1, map2, INTER_CUBIC);
+					//remap(img, img, map1, map2, INTER_CUBIC);
 					captures.push_back(img);
 					imshow(projectorWindowName, gcp.patternsHN[i]);
 					waitKey(projectionInterval);
 					img = cam.readImage();
 					flip(img, img, 1);
-					remap(img, img, map1, map2, INTER_CUBIC);
+					//remap(img, img, map1, map2, INTER_CUBIC);
 					captures.push_back(img);
 				}
 				//	グレイコードパターン解析
@@ -228,7 +228,7 @@ int main(void)
 		cameraMatrixProj, distCoeffsProj,			//	プロジェクタパラメータ	
 		img.size(),									//	画像サイズ
 		RProCam, TProCam, EProCam, FProCam,			//	カメラに対するプロジェクタの外部パラメータ
-		CALIB_FIX_INTRINSIC,						//	個々に求めた内部パラメータで固定（外部パラメータだけ推定）
+		CALIB_FIX_INTRINSIC,					//	個々に求めた内部パラメータで固定（外部パラメータだけ推定）
 		TermCriteria(TermCriteria::COUNT + TermCriteria::EPS, 30, 1e-6)
 		);
 	cout << "R = \n" << RProCam
@@ -245,11 +245,12 @@ int main(void)
 	{	// Get the image
 		cv::Mat image = cam.readImage();
 		flip(image, image, 1);
-		Mat imgUndistorted;
+		Mat imgUndistorted, imgGray;
 		remap(image, imgUndistorted, map1, map2, INTER_CUBIC);
+		cvtColor(imgUndistorted, imgGray, CV_BGR2GRAY);
 		//	チェスボード検出
 		vector<Point2d> corners;
-		bool patternfound = findChessboardCorners(imgUndistorted, patternSize, corners,
+		bool patternfound = findChessboardCorners(imgGray, patternSize, corners,
 			CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE + CALIB_CB_FILTER_QUADS + CALIB_CB_FAST_CHECK);
 		if (patternfound)
 		{	//	見つかった場合

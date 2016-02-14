@@ -28,8 +28,8 @@ FlyCap2CVWrapper::FlyCap2CVWrapper()
 	//	Frame Rate: 120fps
 	flycamError = flycam.SetVideoModeAndFrameRate(VIDEOMODE_FORMAT7, FRAMERATE_FORMAT7);
 	Format7ImageSettings imgSettings;
-	imgSettings.offsetX = 264;
-	imgSettings.offsetY = 224;
+	imgSettings.offsetX = 208;
+	imgSettings.offsetY = 218;
 	imgSettings.width = 800;
 	imgSettings.height = 600;
 	imgSettings.pixelFormat = PIXEL_FORMAT_422YUV8;
@@ -40,12 +40,12 @@ FlyCap2CVWrapper::FlyCap2CVWrapper()
 		return;
 	}
 	//	Disable Auto changes
-	autoFrameRate(false, 85.0f);
+	autoFrameRate(true, 120.0f);
 	autoWhiteBalance(false, 640, 640);
-	autoExposure(false, 1.585f);
+	autoExposure(false, -2.0f);
 	autoSaturation(false, 100.0f);
-	autoShutter(false, 12.5f);
-	autoGain(false, 4.0f);
+	autoShutter(false, 5.844f);
+	autoGain(false, 12.0f);
 
 	flycamError = flycam.StartCapture();
 	if (flycamError == PGRERROR_ISOCH_BANDWIDTH_EXCEEDED)
